@@ -1,24 +1,29 @@
-import logo from './logo.svg';
+import {useState,useEffect} from 'react';
 import './App.css';
+import axios from 'axios';
+
+const URL = 'http://localhost/todo/index.php';
 
 function App() {
+
+  const [tasks,setTasks] = useState([]);
+
+  useEffect(() => {
+    axios.get(URL)
+    .then((response)=> {
+      console.log(response.data);
+      setTasks(response.data);
+    }).catch(error => {
+      alert(error.response ? error.response.data.error : error);
+    })
+  }, [])
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ol>
+      {tasks?.map(task => (
+        <li key={task.id}>{task.description}</li>
+      ))}
+    </ol>
   );
 }
 
