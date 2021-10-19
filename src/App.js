@@ -22,7 +22,7 @@ function App() {
     e.preventDefault();
     console.log(task);
     const json = JSON.stringify({description:task})
-    axios.post(URL + 'add.php',json,{
+    axios.post(URL + 'save.php',json,{
       headers: {
         'Content-Type' : 'application/json'
       }
