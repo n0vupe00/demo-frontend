@@ -1,40 +1,84 @@
 import './App.css';
-import {useState, useEffect} from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const URL = 'http://localhost/todo/';
+
+
 
 function App() {
 
   const [tasks, setTasks] = useState([]);
   const [task, setTask] = useState('');
+  const [editTask, setEditTask] = useState(null);
+  const [editDescription, setEditDescription] = useState('');
+
+  
 
   useEffect(() => {
     axios.get(URL)
-    .then((response) => {
-      setTasks(response.data);
-    }).catch(error => {
-      alert(error.response ? error.response.data.error : error);
-    })
-  },[]);
+      .then((response) => {
+        setTasks(response.data);
+      }).catch(error => {
+        alert(error.response ? error.response.data.error : error);
+      })
+  }, []);
 
   function save(e) {
     e.preventDefault();
-    console.log(task);
-    const json = JSON.stringify({description:task})
-    axios.post(URL + 'save.php',json,{
+    const json = JSON.stringify({ description: task })
+    axios.post(URL + 'save.php', json, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then((response) => {
+        console.log(response);
+        setTasks(tasks => [...tasks, response.data]);
+        setTask('');
+      }).catch(error => {
+        alert(error.response.data.error)
+      });
+  }
+
+  function remove(id) {
+    const json = JSON.stringify({ id: id })
+    axios.post(URL + 'delete.php', json, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then((response) => {
+        const newListWithoutRemoved = tasks.filter((item) => item.id !== id);
+        setTasks(newListWithoutRemoved);
+      }).catch(error => {
+        alert(error.response ? error.response.data.error : error);
+      });
+  }
+
+  function setEditedTask(task) {
+    setEditTask(task);
+    setEditDescription(task?.description);
+  }
+
+  function update(e) {
+    e.preventDefault();
+    const json = JSON.stringify({id:editTask.id,description:editDescription})
+    axios.post(URL + 'update.php',json,{
       headers: {
         'Content-Type' : 'application/json'
       }
     })
     .then((response) => {
-      console.log(response);
-      setTasks(tasks => [...tasks,response.data]);
-      setTask('');
+      tasks[(tasks.findIndex(task => task.id === editTask.id))].description = editDescription;
+      setTasks([...tasks]);
+      setEditedTask(null);
     }).catch (error => {
-      alert(error.response.data.error)
+      alert(error.response ? error.response.data.error : error);
     });
   }
+
+  
 
   return (
     <div className="container">
@@ -45,9 +89,27 @@ function App() {
         <button>Save</button>
       </form>
       <ol>
-        {tasks?.map(task => (
-          <li key={task.id}>{task.description}</li>
-        ))}   
+        {tasks.map(task => (
+          <li key={task.id}>
+            {editTask?.id !== task.id && 
+            task.description
+            }
+            {editTask?.id === task.id &&
+              <form onSubmit={update}>
+                <input value={editDescription} onChange={e => setEditDescription(e.target.value)}/>
+                <button>Save</button>
+                <button type="button" onClick={() => setEditedTask(null)}>Cancel</button>
+              </form>
+            }
+            <a className="delete" onClick={() => remove(task.id)} href="#">
+              Delete
+            </a>&nbsp;
+            {editTask === null &&
+              <a className="edit" onClick={() => setEditedTask(task)} href="#">
+              </a>
+            }
+          </li>
+        ))}
       </ol>
     </div>
   );
